@@ -116,11 +116,11 @@ function renderData() {
     card.innerHTML = `
              <div class="img-container">
               <img src=".${item.image.desktop}" alt="img1">
-              <button id="add-btn" class="add-btn" onclick="handleAddToCart(${JSON.stringify(item).replace(/"/g, '&quot;')})">Add to cart</button>
+              <button id="add-btn" class="add-btn" onclick="handleAddToCart(${JSON.stringify(item).replace(/"/g, '&quot;')})"><i class="fa-solid fa-cart-shopping"></i> Add to cart</button>
               
               <div class="js-display btn-group">
                 <button class="btn-primary" onclick="handleIncreaseQuantity(${JSON.stringify(item).replace(/"/g, '&quot;')})">+</button>
-                <span id="quantity">${1}</span>
+                <span id="quantity">${item.quantity}</span>
                 <button class="btn-primary" onclick="handleDecreaseQuantity(${JSON.stringify(item).replace(/"/g, '&quot;')})">-</button>
               </div>
             </div>
@@ -138,23 +138,75 @@ function renderData() {
 
 renderData();
 
-// handleAddToCart
-
-let cart = [];
-let totalPrice = 0;
+let cart = JSON.parse(localStorage.getItem("cart")) || []; // LocalStorage'dan massivni o'qiymiz yoki bo'sh massivni olamiz
+let totalPrice = 0; // Umumiy narxni hisoblash uchun
 
 function handleAddToCart(meals) {
-    console.log("ishladi...", meals);
-    addBtn.classList.add("js-display")
-    const addBtn = document.querySelector("#add-btn");
+  // Tekshirish: Mahsulot allaqachon savatda bormi?
+  const existingItem = cart.find((item) => item.name === meals.name);
+  if (!existingItem) {
+    cart.push({ ...meals, quantity: 1 }); // Mahsulotni qo'shamiz
+    localStorage.setItem("cart", JSON.stringify(cart)); // LocalStorage yangilanadi
 
-//   const existingItem = cart.find((item) => item.name === mealName);
+    // Kartochka elementini topish
+    const card = [...document.querySelectorAll(".card")].find(
+      (c) => c.innerHTML.includes(meals.name)
+    );
 
-//   if (existingItem) {
-//     existingItem.quantity++;
-//   } else {
-//     cart.push({ name: mealName, quantity: 1 });
-//   }
+    const addBtn = card.querySelector(".add-btn");
+    const btnGroup = card.querySelector(".btn-group");
 
-//   updateCart();
+    // Tugmalarni boshqarish
+    addBtn.classList.add("js-display"); // Add to cart tugmasini yashirish
+    btnGroup.classList.remove("js-display"); // Tugma guruhini ko'rsatish
+
+    totalPrice += meals.price; // Umumiy narxni yangilash
+    console.log("Savat: ", cart);
+    console.log("Umumiy narx: ", totalPrice);
+  } else {
+    alert("Bu mahsulot allaqachon savatda mavjud!");
+  }
 }
+
+function renderCarts() {
+  const cartProducts = document.querySelector("#cart-products");
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  if (cart.length === 0) {
+    cartProducts.innerHTML = `<h2>Savat bo'sh</h2>`;
+    return;
+  }
+
+  cartProducts.innerHTML = ""; // Avvalgi ma'lumotlarni o'chiramiz
+
+  cart.forEach((item) => {
+    const li = document.createElement("li");
+    li.classList.add("product_item");
+    li.innerHTML = `
+      <h3>${item.name}</h3>
+      <div class="cart_item">
+        <div class="cart_item_info">
+          <span class="quantity">${item.quantity}x</span>
+          <span class="total-price">$${(item.quantity * item.price).toFixed(2)}</span>
+          <span class="price">$${item.price.toFixed(2)}</span>
+        </div>
+        <div>
+          <button class="remove_item" onclick="handleRemoveFromCart('${item.name}')">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+    `;
+    cartProducts.appendChild(li);
+  });
+}
+
+function handleRemoveFromCart(productName) {
+  // Mahsulotni cart massivdan olib tashlaymiz
+  cart = cart.filter((item) => item.name !== productName);
+  localStorage.setItem("cart", JSON.stringify(cart)); // LocalStorage yangilanadi
+  renderCarts(); // Savatni qaytadan chizamiz
+}
+
+// Sahifani yangilashda savatni qayta ko'rsatish uchun
+renderCarts();
