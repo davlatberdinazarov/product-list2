@@ -101,112 +101,150 @@ const mealsData = [
 ];
 
 const main = document.querySelector("#main");
+const cartProducts = document.querySelector("#cart-products");
+const cartCount = document.querySelector("#count_cart");
 
-function renderData() {
-  if (mealsData.length == 0) {
-    main.innerHTML = `
-            <h1>There is no data...</h1>
-        `;
-  }
+let cart = [];
+function renderMeals() {
+  main.innerHTML = mealsData
+    .map((meal) => {
+      const isInCart = cart.find((item) => item.name === meal.name);
+      const quantity = isInCart ? isInCart.quantity : 0;
 
-  mealsData.map((item) => {
-    const card = document.createElement("div");
-    card.classList.add("card");
-
-    card.innerHTML = `
-             <div class="img-container">
-              <img src=".${item.image.desktop}" alt="img1">
-              <button id="add-btn" class="add-btn" onclick="handleAddToCart(${JSON.stringify(item).replace(/"/g, '&quot;')})"><i class="fa-solid fa-cart-shopping"></i> Add to cart</button>
-              
-              <div class="js-display btn-group">
-                <button class="btn-primary" onclick="handleIncreaseQuantity(${JSON.stringify(item).replace(/"/g, '&quot;')})">+</button>
-                <span id="quantity">${item.quantity}</span>
-                <button class="btn-primary" onclick="handleDecreaseQuantity(${JSON.stringify(item).replace(/"/g, '&quot;')})">-</button>
-              </div>
+      return `
+        <div class="card">
+          <div class="img-container">
+            <img src=".${meal.image.desktop}" alt="${meal.name}" />
+            <button class="add-btn ${quantity > 0 ? "js-display" : ""}" 
+              onclick='addToCart(${JSON.stringify(meal)})'>Add to cart</button>
+            <div class="btn-group ${quantity > 0 ? "" : "js-display"}">
+              <button class="btn-primary" onclick="handleIncreaseQuantity('${
+                meal.name
+              }')">+</button>
+              <span id="quantity-${meal.name}">${quantity}</span>
+              <button class="btn-primary" onclick="handleDecreaseQuantity('${
+                meal.name
+              }')">-</button>
             </div>
-          
-            <div class="card_content">
-              <h5>${item.category}</h5>
-              <h2>${item.name}</h2>
-              <p>$${item.price}</p>
-            </div>
-        `;
-
-    main.appendChild(card);
-  });
-}
-
-renderData();
-
-let cart = JSON.parse(localStorage.getItem("cart")) || []; // LocalStorage'dan massivni o'qiymiz yoki bo'sh massivni olamiz
-let totalPrice = 0; // Umumiy narxni hisoblash uchun
-
-function handleAddToCart(meals) {
-  // Tekshirish: Mahsulot allaqachon savatda bormi?
-  const existingItem = cart.find((item) => item.name === meals.name);
-  if (!existingItem) {
-    cart.push({ ...meals, quantity: 1 }); // Mahsulotni qo'shamiz
-    localStorage.setItem("cart", JSON.stringify(cart)); // LocalStorage yangilanadi
-
-    // Kartochka elementini topish
-    const card = [...document.querySelectorAll(".card")].find(
-      (c) => c.innerHTML.includes(meals.name)
-    );
-
-    const addBtn = card.querySelector(".add-btn");
-    const btnGroup = card.querySelector(".btn-group");
-
-    // Tugmalarni boshqarish
-    addBtn.classList.add("js-display"); // Add to cart tugmasini yashirish
-    btnGroup.classList.remove("js-display"); // Tugma guruhini ko'rsatish
-
-    totalPrice += meals.price; // Umumiy narxni yangilash
-    console.log("Savat: ", cart);
-    console.log("Umumiy narx: ", totalPrice);
-  } else {
-    alert("Bu mahsulot allaqachon savatda mavjud!");
-  }
-}
-
-function renderCarts() {
-  const cartProducts = document.querySelector("#cart-products");
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-  if (cart.length === 0) {
-    cartProducts.innerHTML = `<h2>Savat bo'sh</h2>`;
-    return;
-  }
-
-  cartProducts.innerHTML = ""; // Avvalgi ma'lumotlarni o'chiramiz
-
-  cart.forEach((item) => {
-    const li = document.createElement("li");
-    li.classList.add("product_item");
-    li.innerHTML = `
-      <h3>${item.name}</h3>
-      <div class="cart_item">
-        <div class="cart_item_info">
-          <span class="quantity">${item.quantity}x</span>
-          <span class="total-price">$${(item.quantity * item.price).toFixed(2)}</span>
-          <span class="price">$${item.price.toFixed(2)}</span>
+          </div>
+          <h3>${meal.name}</h3>
+          <p>$${meal.price.toFixed(2)}</p>
         </div>
-        <div>
-          <button class="remove_item" onclick="handleRemoveFromCart('${item.name}')">
+      `;
+    })
+    .join("");
+}
+
+function addToCart(meal) {
+  const existing = cart.find((item) => item.name === meal.name);
+  if (existing) {
+    existing.quantity++;
+  } else {
+    cart.push({ ...meal, quantity: 1 });
+  }
+  renderMeals();
+  renderCart();
+}
+
+function handleIncreaseQuantity(name) {
+  const item = cart.find((meal) => meal.name === name);
+  if (item) {
+    item.quantity++;
+  } else {
+    const meal = mealsData.find((meal) => meal.name === name);
+    cart.push({ ...meal, quantity: 1 });
+  }
+  renderMeals();
+  renderCart();
+}
+
+function handleDecreaseQuantity(name) {
+  const item = cart.find((meal) => meal.name === name);
+  if (item) {
+    item.quantity--;
+    if (item.quantity === 0) {
+      cart = cart.filter((meal) => meal.name !== name);
+    }
+  }
+  renderMeals();
+  renderCart();
+}
+
+function renderCart() {
+  // Clear previous content
+  cartProducts.innerHTML = "";
+
+  // Render cart items
+  cart.forEach((item) => {
+    let wrapperList = document.createElement("div");
+    wrapperList.classList.add("cart_item_wrapper");
+
+    // Apply styles for hidden scrollbar but with scroll functionality
+    wrapperList.style.overflow = "auto"; // Add overflow auto for scroll when necessary
+    wrapperList.style.maxHeight = "300px"; // Set a max height (adjust as needed)
+    wrapperList.style.marginBottom = "10px"; // Optional: for some spacing between items
+
+    wrapperList.innerHTML = `
+      <div class="your-products-li">
+        <li class="cart_item">
+          <div>
+            <h3>${item.name}</h3>
+            <div class="cart_item_info">
+              <span class="quantity">x${item.quantity}</span>
+              •
+              <span class="total-price">$${(item.quantity * item.price).toFixed(
+                2
+              )}</span>
+              •
+              <span class="price">$${item.price.toFixed(2)}</span>
+            </div>
+          </div>
+          <button class="remove_item" onclick='removeFromCart("${item.name}")'>
             <i class="fa-solid fa-xmark"></i>
           </button>
-        </div>
+        </li>
       </div>
     `;
-    cartProducts.appendChild(li);
+
+    cartProducts.appendChild(wrapperList);
   });
+
+  // Calculate cart total quantity and price
+  const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
+  const totalPrice = cart
+    .reduce((total, item) => total + item.quantity * item.price, 0)
+    .toFixed(2);
+
+  // Update cart count
+  cartCount.textContent = totalQuantity;
+
+  // Add order total and confirm button
+  cartProducts.innerHTML += `
+    <div class="cart_total">
+      <div class="order-total">
+        <p>Order Total</p>
+        <h2>$${totalPrice}</h2>
+      </div>
+
+      <div class="carbon-div">
+        <p>This is a carbon-neutral delivery</p>
+      </div>
+
+      <div>
+        <button onclick="alert('You ordered! $${totalPrice}')" class="btn-confirm" ${
+    totalQuantity === 0 ? "disabled" : ""
+  }>Confirm Order</button>
+      </div>
+    </div>
+  `;
 }
 
-function handleRemoveFromCart(productName) {
-  // Mahsulotni cart massivdan olib tashlaymiz
-  cart = cart.filter((item) => item.name !== productName);
-  localStorage.setItem("cart", JSON.stringify(cart)); // LocalStorage yangilanadi
-  renderCarts(); // Savatni qaytadan chizamiz
+
+function removeFromCart(name) {
+  cart = cart.filter((item) => item.name !== name);
+  renderMeals();
+  renderCart();
 }
 
-// Sahifani yangilashda savatni qayta ko'rsatish uchun
-renderCarts();
+// Initial render
+renderMeals();
