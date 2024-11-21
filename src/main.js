@@ -100,9 +100,22 @@ const mealsData = [
   },
 ];
 
+
+// Variables
 const main = document.querySelector("#main");
 const cartProducts = document.querySelector("#cart-products");
 const cartCount = document.querySelector("#count_cart");
+const modalBackdrop = document.querySelector('.modal-backdrop');
+
+modalBackdrop.addEventListener('click', () => {
+  modalBackdrop.style.display = "none";
+})
+
+function oponModal() {
+  document.getElementById('modal').style.display = 'block'
+  modalBackdrop.style.display = "flex";
+  renderCart();
+}
 
 let cart = [];
 function renderMeals() {
@@ -231,7 +244,7 @@ function renderCart() {
       </div>
 
       <div>
-        <button onclick="alert('You ordered! $${totalPrice}')" class="btn-confirm" ${
+        <button onclick="oponModal()" class="btn-confirm" ${
     totalQuantity === 0 ? "disabled" : ""
   }>Confirm Order</button>
       </div>

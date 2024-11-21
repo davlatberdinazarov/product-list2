@@ -267,6 +267,36 @@ li {
   scrollbar-width: none; /* Hides scrollbar for Firefox */
 }
 
+/* modal */
+
+#modal {
+  display: none;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px 30px;
+  max-width: 480px;
+  border-radius: 12px;
+  width: 100%;
+  z-index: 999;
+}
+
+/* /modal */
 @media (max-width: 1100px) {
   .container {
     grid-template-columns: auto;
