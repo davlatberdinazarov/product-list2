@@ -30,11 +30,13 @@ body {
 }
 
 .basket-section {
-  max-height: 516px;
+  min-height: 216px;
   background-color: white;
   padding: 12px 19px;
   border-radius: 12px;
   box-shadow: 2px 1.2px 4px;
+  max-height: 100vh;
+  overflow: scroll;
 }
 
 .cards {
